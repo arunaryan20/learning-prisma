@@ -1,71 +1,30 @@
-import res from "express/lib/response.js";
 import prisma from "../DB/db.config.js";
 import { imageValidator } from "../utils/helper.js";
 
 class ProfileController {
-    static async getUsers(req, res) {
+    static async getUserDetails(req,res) {
         try {
-            let { page = 1, limit = 5, search = "" } = req.query;
-            page = Number(page);
-            limit = Number(limit);
-            const skip = (page - 1) * limit;
-            //search filter
-            const searchFilter = search ? {
-                OR: [
-                    {
-                        name: {
-                            contains: search,
-                            mode: "insensitive"
-                        }
-                    },
-                    {
-                        email: {
-                            contains: search,
-                            mode: "insensitive"
-                        }
-                    }
-                ]
-            } : {};
-            const totalUsers=await prisma.Users.count({where:searchFilter});
-            const userData=await prisma.Users.findMany({
-                where:searchFilter,
-                skip:skip,
-                take:limit,
-                orderBy:{
-                    created_at:"desc"
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ success: false, message: "Missing user id" })
+            }
+            const userData = await prisma.users.findUnique({
+                where: {
+                    id: Number(id)
                 },
                 select:{
+                    id:true,
                     name:true,
                     email:true,
                     profile:true,
                     created_at:true,
-                    updated_at:true,
+                    updated_at:true
                 }
             })
-
-            return res.status(200).json({ success: true,
-                 message: "Users fetched succesfully",
-                 total:totalUsers,
-                 currentPage:page,
-                 totalPages:Math.ceil(totalUsers/limit),
-                 limit:limit,
-                 users:userData
-                });
-        } catch (error) {
-            console.log("Error---->",error);
-            return res.status(500).json({ success: false, message: "Internal server Error" })
-        }
-    }
-    static async createUser() {
-        try {
-            // Use create method same as in auth controller
-        } catch (error) {
-            return res.status(500).json({ success: false, message: "Internal server Error" })
-        }
-    }
-    static async getUserDetails() {
-        try {
-            // User findUnique method
+            if (!userData) {
+                return res.status(400).json({ success: false, message: "User not found" })
+            }
+            return res.status(200).json({ success: true, message: "User fetched successfully", data: userData })
         } catch (error) {
             return res.status(500).json({ success: false, message: "Internal server Error" })
         }
@@ -88,7 +47,7 @@ class ProfileController {
                 if (err) throw err
             })
 
-            await prisma.Users.update({
+            await prisma.users.update({
                 data: {
                     profile: imageName
                 },
@@ -108,7 +67,7 @@ class ProfileController {
             if (!id) {
                 return res.status(400).json({ success: false, message: "User id is required" });
             }
-            const userData = await prisma.Users.findUnique({
+            const userData = await prisma.users.findUnique({
                 where: {
                     id: Number(id)
                 }
@@ -117,7 +76,7 @@ class ProfileController {
                 return res.status(400).json({ success: false, message: "User not found" })
             }
 
-            await prisma.Users.delete({
+            await prisma.users.delete({
                 where: {
                     id: Number(id)
                 }

@@ -6,20 +6,19 @@ import "dotenv/config";
 class AuthController {
     static async register(req, res) {
         try {
-            const { id, name, email, password, profile } = req.body;
-            if (!id || !name || !email || !password) {
+            const { name, email, password, profile } = req.body;
+            if (!name || !email || !password) {
                 return res.status(400).json({ success: false, message: "Missing parameters" })
             }
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync(password, salt);
             const userData = {
-                id: id,
                 name: name,
                 email: email,
                 password: hash,
                 profile: profile || ""
             }
-            const checkExistingUser = await prisma.Users.findUnique({
+            const checkExistingUser = await prisma.users.findUnique({
                 where: {
                     email: email
                 }
@@ -27,11 +26,13 @@ class AuthController {
             if (checkExistingUser) {
                 return res.status(400).json({ success: false, messsage: "Email already exist" });
             }
-            const user = await prisma.Users.create({
+            
+            const user = await prisma.users.create({
                 data: userData
             })
             return res.status(201).json({ success: true, message: "User registered successfully" });
         } catch (error) {
+            console.log("error--->",error);
             return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
         }
     }
@@ -43,7 +44,7 @@ class AuthController {
                 return res.status(400).json({ success: false, message: "Email and Password is required" });
             }
 
-            const userData = await prisma.Users.findUnique({
+            const userData = await prisma.users.findUnique({
                 where: {
                     email: email
                 }
@@ -68,6 +69,7 @@ class AuthController {
                 return res.status(200).json({ success: true, message: "Login successfully", data });
             });
         } catch (error) {
+            console.log("Error---->",error);
             return res.status(500).json({ success: false, message: "Internal server error" })
         }
     }

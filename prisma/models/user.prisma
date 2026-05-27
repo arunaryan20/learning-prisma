@@ -1,0 +1,10 @@
+model Users {
+    id   Int @id @default(autoincrement())
+    name  String @db.VarChar(191)
+    email String @unique @db.VarChar(191)
+    password String
+    profile  String
+    posts      Posts[]
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now())
+}
