@@ -11,12 +11,7 @@ app.use(express.urlencoded({extended:true}));
 app.use(fileUpload());
 app.use(cors());
 
-app.get("/",(req,res)=>{
-          res.json({success:true,message:"Prisma Testing"});
- })
-
-
- // Import routes
+// Import routes
 
 import ApiRoutes from "./routes/api.js";
 app.use("/api",ApiRoutes);

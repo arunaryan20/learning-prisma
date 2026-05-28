@@ -3,15 +3,14 @@ import prisma from "../DB/db.config.js"
 class Posts {
     static async createPost(req, res) {
         try {
-            const { title,desc, userId } = req.body;
-            
+            const { title, desc, userId } = req.body;
             if (!title || !userId || !desc) {
                 return res.status(400).json({ success: false, message: "Missing require fields" });
             }
             const data = {
                 title: title,
-                desc:desc,
-                userId: userId
+                desc: desc,
+                userId: Number(userId)
             }
             await prisma.posts.create({
                 data: data
@@ -45,40 +44,42 @@ class Posts {
     static async getAllPost(req, res) {
         try {
             let { page = 1, limit = 5, search = "" } = req.query;
+            const userId =req.user.id;
             page = Number(page);
             limit = Number(limit);
             const skip = (page - 1) * limit;
-            const searchFilter={
-                deleted:false,
+            const searchFilter = {
+                deleted: false,
+                userId:userId,
                 ...(search && {
-                    title:{
-                        contains:search,
-                        mode:"insensitive"
+                    title: {
+                        contains: search,
+                        mode: "insensitive"
                     }
                 })
             }
-            const postData= await prisma.posts.findMany({
-                where:searchFilter,
-                skip:skip,
-                take:limit,
-                include:{
-                    user:true
+            const postData = await prisma.posts.findMany({
+                where: searchFilter,
+                skip: skip,
+                take: limit,
+                include: {
+                    user: true
                 },
-                orderBy:{
-                    id:"desc"
+                orderBy: {
+                    id: "desc"
                 }
             })
-            const totalPost=await prisma.posts.count({
-                where:searchFilter
+            const totalPost = await prisma.posts.count({
+                where: searchFilter
             })
             return res.status(200).json({
-                success:true,
-                message:"Posts fetched successfully",
-                data:postData,
-                total:totalPost,
-                page:page,
-                limit:limit,
-                totalPages:Math.ceil(totalPost/limit)
+                success: true,
+                message: "Posts fetched successfully",
+                data: postData,
+                total: totalPost,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(totalPost / limit)
             })
 
         } catch (error) {
@@ -88,11 +89,11 @@ class Posts {
     static async updatePost(req, res) {
         try {
             const { id } = req.params;
-            const { title } = req.body;
+            const { title,desc } = req.body;
             if (!id) {
                 return res.status(400).json({ success: false, messag: "Post id is required" });
             }
-            if (!title) {
+            if (!title || !desc) {
                 return res.status(400).json({ success: false, message: "title is required" })
             }
             const postData = await prisma.posts.findUnique({
@@ -105,7 +106,8 @@ class Posts {
             }
             await prisma.posts.update({
                 data: {
-                    title: title
+                    title: title,
+                    desc:desc
                 },
                 where: {
                     id: Number(id)
@@ -119,6 +121,7 @@ class Posts {
     static async deletePost(req, res) {
         try {
             const { id } = req.params;
+            console.log("id---->",id);
             if (!id) {
                 return res.status(400).json({ success: false, message: "Post id is required" })
             }

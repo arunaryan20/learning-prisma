@@ -5,7 +5,5 @@
     const prisma=new PrismaClient({
         log: ["query","error"]
     });
-    // console.log(Object.keys(prisma));
-
 
     export default prisma;
